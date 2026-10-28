@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ユナイテッドザクザクのおつかい</title>
+<style>
+:root{--fg:#e9e4d8;--red:#b3141c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:#000;color:var(--fg);font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%}
+#app{position:relative;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;pointer-events:none}
+#box{pointer-events:auto;background:rgba(8,7,9,.86);border:1px solid #3a3530;padding:16px;max-height:46%;overflow:auto}
+#txt{font-size:16px;line-height:1.85;margin:0;white-space:pre-wrap}
+#ch{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+#ch:empty{display:none}
+button,input{font:inherit;font-size:16px;color:var(--fg);background:#17141a;border:1px solid #5a5148;padding:11px 16px;border-radius:2px}
+button:active{background:#2a1417;border-color:var(--red)}
+input{flex:1;min-width:0}
+.g{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%}
+.g button{padding:10px 0}
+.dead #box{border-color:var(--red)}
+.dead h2{color:var(--red);font-size:26px;margin:0 0 8px;letter-spacing:.3em}
+#fl{position:fixed;inset:0;background:var(--red);opacity:0;pointer-events:none;transition:opacity 1.2s}
+</style></head><body>
+<canvas id="c"></canvas><div id="fl"></div>
+<div id="app"><div id="box"><p id="txt"></p><div id="ch"></div></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=i=>document.getElementById(i),IM={face:'data:image/jpeg;base64,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',box:'data:image/jpeg;base64,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'},Y='伊丹「';
+let S,R,CM,AM,T,cur,upd,kill,onTap,AC,coin=0,PS=[],rz=0,M,car,tick=0;
+const ray=new THREE.Raycaster();
+function sting(){try{AC=AC||new AudioContext();const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type='sawtooth';o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(30,t+1.2);g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+1.3);o.connect(g).connect(AC.destination);o.start();o.stop(t+1.3)}catch(e){}}
+// ---- 3D base ----
+R=new THREE.WebGLRenderer({canvas:$('c'),antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.shadowMap.enabled=true;R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.15;
+CM=new THREE.PerspectiveCamera(65,1,.1,80);
+function rs(){R.setSize(innerWidth,innerHeight);CM.aspect=innerWidth/innerHeight;CM.setViewOffset(innerWidth,innerHeight,0,innerHeight*.17,innerWidth,innerHeight);CM.updateProjectionMatrix()}
+addEventListener('resize',rs);rs();
+function loop(){requestAnimationFrame(loop);if(!S)return;tick=performance.now()/1000;if(upd)upd(tick);if(kill){kill.o.position.lerp(kill.p,.1);CM.position.x+=(Math.random()-.5)*.03}R.render(S,CM)}loop();
+addEventListener('pointerdown',e=>{if(e.target.closest('#box')||!onTap)return;onTap(e)});
+function pick(e,list){ray.setFromCamera({x:e.clientX/innerWidth*2-1,y:-(e.clientY/innerHeight*2-1)},CM);return (ray.intersectObjects(list,true)[0]||{}).object}
+function world(bg,fg,cam,look,build){S=new THREE.Scene();S.background=new THREE.Color(bg);S.fog=new THREE.Fog(bg,fg[0],fg[1]);
+ AM=new THREE.HemisphereLight(0xbfd0ff,0x333344,.7);S.add(AM);const d=new THREE.DirectionalLight(0xfff0e0,.8);d.position.set(cam[0]+5,9,cam[2]+2);d.target.position.set(cam[0],0,cam[2]-6);d.castShadow=true;d.shadow.mapSize.set(1024,1024);const sh=d.shadow.camera;sh.left=-14;sh.right=14;sh.top=14;sh.bottom=-14;sh.far=40;S.add(d,d.target);const l=new THREE.PointLight(0xfff2cc,.6,30);l.position.set(cam[0],2.3,cam[2]-2);S.add(l);
+ CM.position.set(...cam);CM.lookAt(...look);upd=null;kill=null;onTap=null;rz=0;build&&build()}
+const bx=(w,h,d,x,y,z,c,p)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:c,roughness:.8}));m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;(p||S).add(m);return m};
+const gnd=c=>bx(200,.2,200,0,-.1,0,c);
+const TX={},SK=0xd2b49a,SM=(c,r=.85)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
+function T2(t){t.encoding=THREE.sRGBEncoding;return t}
+function faceTex(){const c=document.createElement('canvas');c.width=128;c.height=170;const x=c.getContext('2d'),g=x.createLinearGradient(0,0,0,170);g.addColorStop(0,'#d9b99e');g.addColorStop(1,'#c29e84');x.fillStyle=g;x.fillRect(0,0,128,170);
+ x.fillStyle='#3a2a22';x.fillRect(26,56,28,5);x.fillRect(74,56,28,5);x.fillStyle='#fff';x.beginPath();x.ellipse(40,76,13,7,0,0,7);x.ellipse(88,76,13,7,0,0,7);x.fill();x.fillStyle='#2a1c16';x.beginPath();x.arc(40,76,5.5,0,7);x.arc(88,76,5.5,0,7);x.fill();
+ x.strokeStyle='#a07d66';x.lineWidth=3;x.beginPath();x.moveTo(64,84);x.lineTo(60,114);x.lineTo(70,116);x.stroke();x.fillStyle='#a8505a';x.fillRect(48,136,32,6);return T2(new THREE.CanvasTexture(c))}
+function tex(n){return TX[n]||(TX[n]=n==='伊丹'?T2(new THREE.TextureLoader().load(IM.face)):faceTex())}
+function label(n){const c=document.createElement('canvas');c.width=256;c.height=64;const q=c.getContext('2d');q.font='bold 40px sans-serif';q.textAlign='center';q.fillStyle='#fff';q.strokeStyle='#000';q.lineWidth=6;q.strokeText(n,128,46);q.fillText(n,128,46);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:T2(new THREE.CanvasTexture(c)),depthTest:false}));s.scale.set(.8,.2,1);return s}
+function ppl(n,x,z,o={}){const g=new THREE.Group(),I=n==='伊丹',cl=o.c||0x3a3f55,C=(a,b,h)=>new THREE.CylinderGeometry(a,b,h,12),P=(geo,m,x,y,z)=>{const e=new THREE.Mesh(geo,m);e.position.set(x,y,z);e.castShadow=true;g.add(e);return e};
+ for(const s of[-1,1]){P(C(.085,.07,.86),SM(0x2a2a35),s*.1,.43,0);P(C(.055,.045,.62),SM(cl),s*.27,1.15,0).rotation.z=s*.06;P(new THREE.SphereGeometry(.05,8,6),SM(SK),s*.285,.82,0);P(new THREE.BoxGeometry(.1,.07,.24),SM(0x151515),s*.1,.035,.05)}
+ P(C(.2,.17,.62),SM(cl),0,1.15,0);P(C(.05,.055,.12),SM(SK),0,1.52,0);
+ const h=new THREE.Group(),hm=(geo,m)=>{const e=new THREE.Mesh(geo,m);e.scale.set(1,1.22,1.05);e.castShadow=true;h.add(e)};h.position.y=1.66;
+ hm(new THREE.SphereGeometry(.125,20,16),SM(SK));hm(new THREE.SphereGeometry(.1265,24,18,Math.PI/2-.8,1.6,.35,2),new THREE.MeshStandardMaterial({map:tex(n),emissiveMap:tex(n),emissive:0x555555,roughness:.6}));
+ if(!I)hm(new THREE.SphereGeometry(.132,16,10,0,6.3,0,.85),SM(o.h||0x2a1e18));
+ g.add(h);g.userData.hd=h;if(!I&&!o.nl){const l=label(n);l.position.y=2.05;g.add(l)}
+ g.position.set(x,0,z);g.scale.setScalar(o.s||1);g.rotation.y=o.ry||0;S.add(g);return g}
+function sign(t,x,y,z,w=2,h=.8,bg='#1b6b3a'){const c=document.createElement('canvas');c.width=256;c.height=Math.round(256*h/w);const q=c.getContext('2d');q.fillStyle=bg;q.fillRect(0,0,256,c.height);q.fillStyle='#fff';q.font='bold '+Math.min(c.height*.6,230/t.length)+'px sans-serif';q.textAlign='center';q.textBaseline='middle';q.fillText(t,128,c.height/2);
+ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:T2(new THREE.CanvasTexture(c))}));m.position.set(x,y,z);S.add(m);return m}
+function boxItem(x,y,z){const t=T2(new THREE.TextureLoader().load(IM.box));const m=new THREE.Mesh(new THREE.BoxGeometry(.3,.55,.16),new THREE.MeshBasicMaterial({map:t}));m.position.set(x,y,z);S.add(m);return m}
+function noise(a,rx,ry){const c=document.createElement('canvas');c.width=c.height=128;const q=c.getContext('2d');q.fillStyle=a;q.fillRect(0,0,128,128);for(let i=0;i<1400;i++){q.fillStyle='rgba('+(Math.random()<.5?'255,255,255':'0,0,0')+','+Math.random()*.12+')';q.fillRect(Math.random()*128,Math.random()*128,2,2)}const t=T2(new THREE.CanvasTexture(c));t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rx,ry);return t}
+function road(){const pl=(w,h,m,y)=>{const g=new THREE.Mesh(new THREE.PlaneGeometry(w,h),m);g.rotation.x=-Math.PI/2;g.position.y=y;g.receiveShadow=true;S.add(g)};
+ pl(200,200,new THREE.MeshStandardMaterial({map:noise('#2a2a2e',40,40),roughness:1}),0);pl(7,200,new THREE.MeshStandardMaterial({map:noise('#3c3c42',3,40),roughness:.6}),.02);
+ for(let z=-70;z<10;z+=6){bx(.15,.03,2,0,.05,z,0xddddaa);for(const s of[-1,1]){const h=2.5+Math.random()*3.5,hx=s*6.5;bx(4,h,4.5,hx,h/2,z,[0x6a5a5a,0x5a6068,0x70685a][Math.floor(Math.random()*3)]);bx(4.4,.3,4.9,hx,h+.15,z,0x2a2a30);
+  for(let k=0;k<3;k++)for(let j=0;j<Math.floor(h/1.3);j++){const w=new THREE.Mesh(new THREE.PlaneGeometry(.6,.8),new THREE.MeshBasicMaterial({color:Math.random()<.45?0xffd890:0x101828}));w.position.set(s*4.45,.9+j*1.3,z-1.4+k*1.4);w.rotation.y=-s*Math.PI/2;S.add(w)}
+  bx(.1,3,.1,s*3.8,1.5,z+3,0x222222);bx(.3,.15,.3,s*3.8,3.05,z+3,0xffe8a0)}}}
+function prius(x,z){const g=new THREE.Group(),b=(w,h,d,x,y,z,c)=>bx(w,h,d,x,y,z,c,g);
+ b(1.7,.6,4,0,.6,0,0xeeeeee);b(1.5,.55,2.1,0,1.15,-.2,0xdfe6ea);b(1.2,.3,.05,0,1.15,.87,0x223344);b(.3,.15,.05,.55,.65,2.02,0xffffcc);b(.3,.15,.05,-.55,.65,2.02,0xffffcc);
+ for(const a of[-.9,.9])for(const c of[-1.3,1.3])b(.2,.6,.6,a,.3,c,0x111111);g.position.set(x,0,z);S.add(g);return g}
+function stn(){gnd(0x23262e);bx(12,3.5,5,0,1.75,-9,0x5b5560);bx(13,.4,6,0,3.7,-8,0x2a3a50);sign('善通寺駅',0,3,-6.45,4,.9,'#27406a');for(const s of[-1,1]){bx(.1,3,.1,s*4,1.5,-2,0x222222);bx(.3,.15,.3,s*4,3.05,-2,0xffe8a0)}}
+function pf(r=1){gnd(0x2a2d33);bx(.3,.02,80,1.5,.02,0,0xe0c030);bx(8,2.6,60,-9,1.4,-20,0x3a4c60);for(let z=-30;z<6;z+=6)bx(.3,3.6,.3,3.5,1.8,z,0x555555);if(r)bx(8,.3,80,3.5,3.7,-30,0x333844)}
+const walk=(a)=>{const g=new THREE.Vector3();CM.getWorldDirection(g);return g};
+function spawnI(){const g=ppl('伊丹',0,0,{s:1.2}),d=walk();g.position.copy(CM.position).addScaledVector(d,6).setY(0);g.lookAt(CM.position.x,0,CM.position.z);return g}
+// ---- UI ----
+function sc(text,btns,o={}){clearTimeout(T);if(o.retry)cur=o.retry;document.body.classList.remove('dead');$('txt').textContent=text;const ch=$('ch');ch.innerHTML='';
+ (btns||[]).forEach(([l,f])=>{const b=document.createElement('button');b.textContent=l;b.onclick=f;ch.appendChild(b)});if(o.timer)T=setTimeout(o.onTime,o.timer*1000);return ch}
+function die(msg,k,rv){clearTimeout(T);onTap=null;upd=k&&k.isGroup&&k.userData.upd||upd;sting();const f=$('fl');f.style.transition='none';f.style.opacity=.7;void f.offsetWidth;f.style.transition='opacity 1.2s';f.style.opacity=0;
+ if(k){const o=k===true?spawnI():k,d=walk();kill={o,p:CM.position.clone().addScaledVector(d,1.3).setY(0)}}
+ document.body.classList.add('dead');$('txt').innerHTML='<h2>ゲームオーバー</h2>';$('txt').append(msg);const ch=$('ch');ch.innerHTML='';
+ const b=document.createElement('button');b.textContent='やり直す';b.onclick=()=>{clearTimeout(T);s0()};ch.appendChild(b);if(rv)T=setTimeout(rv,15000)}
+// ---- scenes ----
+function s0(){coin=0;world(0x1c1418,[6,18],[0,1.6,3.4],[0,1.7,0],()=>{gnd(0x3b2d2a);bx(12,5,.2,0,2.5,-3,0x4a3a3a);bx(1.4,1,.1,-3,2.5,-2.85,0x6a8aa0);const i=ppl('伊丹',0,1.3,{s:1.2,c:0x8a909c});upd=t=>{i.position.z=1.3+Math.sin(t)*.05}});
+ sc('伊丹が、いつもの調子で話しかけてきた。\n\n'+Y+'ユナイテッドザクザクを買ってきて欲しい」\n\n頼まれてくれるか？',[['はい',s1],['いいえ',()=>die(Y+'えりと生でしろっていうん？」\n\n伊丹の目が、笑っていなかった。',true)]],{retry:s0})}
+function s1(){world(0x1b2233,[8,40],[0,1.5,6],[0,1.3,-10],road);sc('宇多津イオンへ向かうことにした。\nまずは善通寺駅だ。\n\n善一の前の道を歩き出す。\n\n日が傾いて、道には誰もいない。',[['歩く',s2]],{retry:s1})}
+function s2(){let m='w';world(0x1b2233,[8,40],[0,1.5,6],[0,1.3,-10],()=>{road();car=prius(1.4,-50);upd=()=>{const c=car;if(m==='w')c.position.z+=c.position.z<-10?.4:.02;else if(m==='p')c.position.z+=.5;else if(m==='h'){c.position.x+=(0-c.position.x)*.2;c.position.z+=.6;if(c.position.z>3.5){m='x';die('健介のプリウスは止まらなかった。\n\n鈍い音がして、視界が空になる。')}}}});
+ sc('しばらく歩いていると、前から白いプリウスが近づいてくる。\n運転席にいるのは、健介だ。\n\nとっさに叫ぶ。',[['ちょっとお待ちっ！',()=>{m='h';$('ch').innerHTML=''}],['たみ？',()=>{m='p';$('ch').innerHTML='';$('txt').textContent='「たみ？」\n\n……';T=setTimeout(s2b,1800)}]],{retry:s2})}
+function s2b(){const c=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.04,16),new THREE.MeshLambertMaterial({color:0xd8b040}));c.position.set(.4,.04,2.2);S.add(c);CM.lookAt(.2,.2,0);upd=null;
+ sc('プリウスは何事もなかったように通り過ぎていった。\n\nふと道端を見ると、小さく光るものが落ちている。\n\n「一円玉があった。絶対拾ったら死ぬ。どうしよう」',[['拾う',()=>{coin=1;s3()}],['拾わない',s3]],{retry:s2b})}
+function s3(){world(0x151a2a,[8,40],[0,1.5,4],[0,1.3,-6],()=>{stn();ppl('えりさん',.6,.3,{c:0x8a4a5a})});sc('歩き続け、善通寺駅前に着く。\n\nバイト終わりのえりさんが、たまたま駅前に立っている。',[['声をかける',s4],['声をかけない',()=>die('背後から、聞き覚えのある声。\n\n'+Y+'えりさんや そんなに愛を欲しいのかい わかりましたよ 今言います」\n\nふり返る前に、終わった。',true)]],{retry:s3})}
+function s4(){sc('「おつかれさま」\n\nえりさんと少し談笑する。バイトの話、今日の天気、どうでもいい話。\n\nふいに、背後の空気が冷たくなった。',[['…',s5]],{retry:s4})}
+function s5(){const bad=()=>die('背後から、静かな声がした。\n\n'+Y+'えりさんや そんなに愛が 欲しいのかい 分かりましたよ 今言います」',true);
+ sc('',[],{retry:s5,timer:12,onTime:bad});const t=$('txt');t.append('背後から、声が聞こえる。\n\n'+Y);
+ ['えりさんや ','そんなに','愛が',' 欲しいのかい',' 分かりましたよ',' 今言います'].forEach(w=>{const s=document.createElement('span');s.textContent=w;s.onclick=()=>w==='愛が'?s6():(clearTimeout(T),bad());t.append(s)});t.append('」')}
+function s6(){clearTimeout(T);const i=ppl('伊丹',-1.2,5,{s:1,ry:Math.PI,c:0x8a909c});CM.lookAt(0,1.3,10);upd=()=>{i.position.z+=.12;i.rotation.y=Math.PI};
+ sc('「愛が」――\n\n物陰から、こっそりつけてきていた伊丹が、慌てた声を上げた。\n\n'+Y+'やば間違えた！」\n\n伊丹は走って逃げていった。\n\nえりさんにバイバイと手を振り、改札を抜ける。',[['ホームへ',s7]],{retry:s6})}
+function s7(){let sg=[];world(0x0c1018,[6,40],[0,1.5,3.5],[0,2.4,-4.5],()=>{pf(0);bx(14,7,.3,0,3.5,-4.7,0x2a3140);for(let i=0;i<20;i++)sg.push(sign(String(i+1),-1.84+(i%5)*.92,3.6-Math.floor(i/5)*.9,-4.5,.8,.76,'#27406a'));
+  onTap=e=>{const h=pick(e,sg);if(h){clearTimeout(T);const i=sg.indexOf(h)+1;i===1?train('d'):die(Y+'俺の事バカにしとん？」',true)}}});
+ sc('ホームの案内板を見上げる。\n1番から20番まで、ホームがずらりと並んでいる。\n\nどのホームに乗る？',[],{retry:s7,timer:20,onTime:s8})}
+function s8(){world(0xd0d8d0,[6,30],[0,1.5,2],[0,1,-3],()=>{bx(6,.1,8,0,0,-1,0xb8c0b8);bx(6,3,.1,0,1.5,-4,0xdfe6df);bx(.1,3,8,-3,1.5,-1,0xdfe6df);bx(.1,3,8,3,1.5,-1,0xdfe6df);bx(.55,.45,.7,0,.25,-3.3,0xffffff);bx(.55,.8,.2,0,.9,-3.8,0xf4f4f4)});
+ sc('……急に、お腹が痛くなってきた。\n\n駅のトイレに駆け込む。',[['用を足す',s9]],{retry:s8})}
+function s9(){world(0x0c1018,[6,40],[0,1.5,4],[0,1.3,-12],()=>{pf();sign('1',0,2.6,-8,2,1.2,'#27406a')});
+ sc('すっきりして、トイレを出る。\n再びホームに戻ると、案内板が変わっていた。\n\nホームは、1番しかない。',[['1番ホームの電車に乗る',()=>train('y')]],{retry:s9})}
+function trainW(mode){world(0x05060a,[3,18],[0,1.1,5.8],[0,1.1,0],()=>{bx(3.4,.1,16,0,0,-2,0x3a3a40);bx(3.4,.1,16,0,2.6,-2,0xd8d4c8);bx(.1,2.6,16,-1.7,1.3,-2,0x4a5560);bx(.1,2.6,16,1.7,1.3,-2,0x4a5560);bx(3.4,2.6,.1,0,1.3,-10,0x222222);
+ PS=[];const sk=[],sm=new THREE.MeshBasicMaterial({color:0xfff0b0});
+ for(const s of[-1,1])for(let z=5;z>=-7;z-=2){bx(.7,.4,1.2,s*1.25,.45,z,0x2b4a7a);bx(.12,.8,1.2,s*1.57,.9,z,0x2b4a7a);
+  if(mode==='d'){const p=ppl('伊丹',s*1.25,z,{c:0x8a909c,ry:s<0?Math.PI/2:-Math.PI/2});p.position.y=-.35;p.userData.hd.rotation.x=1.1;PS.push(p)}}
+ if(mode==='y'){const p=ppl('山野',-1.25,3.4,{c:0x4a5a3a,ry:Math.PI/2});p.position.y=-.35;M=p}
+ for(let i=0;i<22;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(.04,.04,.9),sm);m.position.set(i%2?1.76:-1.76,.8+Math.random()*1.2,-10+Math.random()*18);S.add(m);sk.push(m)}
+ upd=()=>{sk.forEach(m=>{m.position.z+=.35;if(m.position.z>8)m.position.z=-10});if(mode==='d'){AM.intensity=Math.random()<.06?.1:.5;if(rz){rz=Math.min(1,rz+.006);PS.forEach(p=>{p.userData.hd.rotation.x=1.1*(1-rz);p.quaternion.slerp(p.userData.q,.04)});CM.rotation.x=-.9*(1-rz)}}}})}
+function train(mode){trainW(mode);
+ if(mode==='d'){CM.rotation.set(-.9,0,0);sc('1番ホームの電車に、無事に乗れた。\n\nがらがらと音を立てて、電車が走り出す。\nほっと胸をなで下ろし、座席に腰を下ろす。\n\n……ふと、気づく。\nまわりの乗客が、全員うつむいている。',[['…',()=>sc('誰も動かない。\n誰も、息をしていないように見える。\n\nゆっくりと、顔を上げる。',[['顔をあげる',()=>{PS.forEach(p=>{const o=new THREE.Object3D();o.position.copy(p.position);o.lookAt(CM.position.x,o.position.y,CM.position.z);p.userData.q=o.quaternion.clone()});rz=.01;$('ch').innerHTML='';$('txt').textContent='';T=setTimeout(()=>die('乗客は全員、伊丹だった。\n\n全員が同じ顔で、同じ口の形で、こちらを見ていた。'),3300)}]],{retry:()=>train('d')})]],{retry:()=>train('d')})}
+ else if(mode==='y'){CM.lookAt(-1.2,1.2,4);sc('1番ホームの電車に乗り、宇多津駅へ向かう。\n\n窓の外を、夕暮れの光が流れていく。\n\nそのとき、すぐ隣から誰かが話しかけてきた。\n\n山野だ。',[['話を聞く',yama]],{retry:()=>train('y')})}
+ else sc('帰りの電車に揺られる。\n\n今度は、乗客はひとりもいない。\n\nやがて、善通寺駅に着く。',[['降りる',send]],{retry:()=>train('n')})}
+function yama(){const ch=sc('山野「どこいっとん？」',[],{retry:yama}),i=document.createElement('input'),b=document.createElement('button');i.placeholder='行き先を入力';b.textContent='答える';
+ b.onclick=()=>{const a=i.value.replace(/[?？]/g,'？').trim();['たみ？','宇多津','宇多津イオン'].includes(a)?fin(a):die('山野「嘘つくなよ」\n\n山野の顔から、表情が消えた。',M)};ch.append(i,b)}
+function fin(a){sc('「'+a+'」\n\n山野「バケモンやん笑」\n\n山野は笑いながら、どこかへ行ってしまった。\n\n電車はそのまま走り続け、やがて宇多津駅に到着する。',[['降りる',s10]],{retry:fin})}
+function s10(){world(0x2a2438,[10,45],[0,1.5,5],[0,1.3,-5],()=>{road();bx(16,7,8,0,3.5,-42,0xd8d8e0);sign('AEON',0,7.5,-37.9,8,2,'#b01a6b');M=ppl('まゆか',0,-16,{c:0x8a5a8a,s:1.05});upd=()=>{if(M.position.z<1.3)M.position.z+=.1}});
+ sc('宇多津イオンまでの道を歩く。\n\n歩いていると、前から女の人が声をかけてきた。\n\nまゆか「伊丹さんの友達ですか？あの、最近伊丹君に新しい彼女が出来たって聞いたんですけど、知ってますか？」',[['知ってますよ',()=>die('背後から、重い風切り音。\n\n伊丹のビッグマグナムが、後頭部に振り下ろされた。',true)],['知らない。',s11]],{retry:s10})}
+function s11(){let n=0,d=0;M.rotation.y=Math.PI;upd=()=>{if(!d)M.position.z-=.04};
+ sc('「知らない。」\n\nまゆか「じゃあいいです。」\n\nまゆかは、そのまま歩き去っていく。',[],{retry:s10});
+ onTap=()=>{M.position.z+=.7;if(++n>=10&&!d){d=1;clearTimeout(T);onTap=null;M.rotation.y=0;M.position.z=1.2;upd=null;
+  sc('「やっぱ知ってる！えりって人！」\n\nまゆか「ありがとう。これお礼。」\n\nまゆかは満足気に、500円をくれた。\n\nそこで俺は気づいた。財布を忘れてきていたのだ。\n\nまゆかに助けられた！！',[['イオンへ',s12]],{retry:s12})}};
+ T=setTimeout(()=>{if(d)return;d=1;onTap=null;const v=new THREE.Group();bx(2,1.3,4.5,0,1,0,0x111114,v);bx(1.8,.5,2.5,0,1.8,0,0x181820,v);for(const a of[-1,1])for(const c of[-1.4,1.4])bx(.3,.7,.7,a*1,.35,c,0x050505,v);v.rotation.y=Math.PI/2;v.position.set(12,0,-1);S.add(v);upd=()=>{if(v.position.x>1.2)v.position.x-=.35};
+  sc('目の前に、黒いミニバンが急停車した。\n\nドアが開き、腕が伸びてくる。\n\n俺はそのまま車に押し込まれた。',[['…',s13]],{retry:s10})},4600)}
+function s13(){world(0x1a1a1a,[6,30],[0,1.5,3],[0,1.4,-4],()=>{bx(10,.1,10,0,0,-1,0x555550);bx(10,4,.2,0,2,-5,0x888880);['寮','学校','病院','伊丹の家'].forEach((t,i)=>sign(t,-3.3+i*2.2,2.4,-4.85,2,.9,'#444'));sign('一富士フードサービス株式会社',0,3.6,-4.85,6,.7,'#1b3a6b')});
+ sc('一富士フードサービス株式会社に連行された。\n\n目の前に、事業所の形態が並んでいる。\n\n寮、学校、病院、伊丹の家。',['寮','学校','病院','伊丹の家'].map(x=>[x,()=>x==='寮'?die(Y+'俺の場所取るなよ」',true):die('「たみ？」\n\n背後で、誰かが静かに言った。')]),{retry:s13})}
+function s12(){world(0xeeeee6,[12,40],[0,1.5,4],[0,1.3,-6],()=>{bx(30,.1,30,0,0,-6,0xe4e2d4);for(let y=0;y<4;y++)for(let x=-8;x<=8;x+=.5)bx(.4,.4,.3,x,.4+y*.6,-6,[0xd04040,0x4060d0,0xe0b030,0x40a060,0xdddddd][Math.floor(Math.random()*5)]);
+  for(const s of[-1,1])bx(.3,2.6,12,s*6,1.3,0,0xc0c0b4);const k=ppl('店員',5.3,-4.6,{c:0xc4c0ae,s:1.05,nl:1,h:0x6a5a4a});upd=t=>{CM.lookAt(Math.sin(t*.7)*4.5,1.3,-6)};
+  onTap=e=>{if(pick(e,[k]))ask()}});
+ sc('宇多津イオンに着き、ザグザグに入る。\n\n商品棚を、舐め回すように見る。\n\nユナイテッドザクザク……ユナイテッドザクザク……\n\n視界の端に、店員さんが少しだけ映る。',[],{retry:s12,timer:18,onTime:()=>die(Y+'おい、ないやんけ」',true)})}
+function ask(){onTap=null;upd=null;sc('「ユナイテッドザクザク、ありますか？」\n\n店員「すみません！裏にありました！今すぐ取ってきます！」\n\n店員さんは、小走りで奥へ消えた。',[['待つ',reg]],{retry:s12})}
+function reg(){world(0xeeeee6,[8,30],[0,1.5,2.5],[0,1.1,-2],()=>{bx(6,.1,8,0,0,-1,0xe4e2d4);bx(2.4,.9,.8,0,.45,-1,0x8a6a4a);ppl('店員',0,-2,{c:0x2e8b57,s:1.3});boxItem(.4,1.2,-1)});
+ sc('店員さんが戻ってきて、ユナイテッドザクザクを手渡してくれた。\n\nそのままレジを通す。\n\n店員「501円になります。」',[['支払う',()=>coin?sc('500円玉と、道で拾った一円玉。\n\n店員「ちょうどですね。ありがとうございました」\n\nユナイテッドザクザクを手に入れた。',[['帰る',home]],{retry:reg}):die('財布を開く。……あれ、お金が足りない？\n\n'+Y+'怒るよ！嫉妬😡」\n\n背後から、ビッグマグナムが振り下ろされた。',true)]],{retry:reg})}
+function home(){world(0x070912,[6,35],[0,1.5,3],[0,1.3,-10],road);sc('ザグザグを出て、夜道を歩き出す。\n\n帰ろうとした、その時。\n\n背後から、声が聞こえてきた。\n\n「ポケポケやろ？♡」',[['振り向く',ang]],{retry:home})}
+function ang(){world(0x070912,[6,35],[0,1.5,3],[0,1.4,-10],()=>{road();const a=ppl('40歳',0,-2.5,{c:0xffffff,s:1.4}),h=new THREE.Mesh(new THREE.TorusGeometry(.25,.03,8,20),new THREE.MeshBasicMaterial({color:0xffe060}));h.position.set(0,2.6,-2.5);h.rotation.x=Math.PI/2;S.add(h);for(const s of[-1,1]){const w=bx(.1,1.7,.9,s*.6,1.6,-2.8,0xffffff);w.rotation.z=s*.5}a.userData.upd=1;die('振り向くと、そこには40歳の天使がいた。\n\n天使は微笑みながら、ゆっくりと近づいてくる。',a,sleep)})}
+function sleep(){world(0xcfd4c8,[10,40],[0,1.3,2],[0,1,-3],()=>{bx(10,.1,10,0,0,-1,0xe4e2d4);bx(3,.6,1.6,0,.3,-2,0x8a6a4a)});
+ sc('……はっ。\n\n急に、ザグザグで寝てしまっていたようだ。\n\n夢、だったのか……？\n\n手には、ユナイテッドザクザクが握られている。',[['帰る',walk2]],{retry:walk2})}
+function walk2(){world(0x070912,[6,35],[0,1.5,3],[0,1.3,-10],road);sc('帰路についていると、どこからか音が聞こえてくる。\n\nドン、カッ、ドン、ドン。\n\n太鼓の達人の音だ。\n\n行く？',[['行く',taiko],['行かない',()=>die(Y+'なんで俺の太鼓代行してくれんかったん？」',true)]],{retry:walk2})}
+function taiko(){let miss=0,fin=0,st=performance.now()/1000;const N=[],sp=7;
+ world(0x0a0a14,[14,50],[0,11,6],[0,0,-1],()=>{bx(3.2,.1,30,0,0,-8,0x20283a);const r=new THREE.Mesh(new THREE.TorusGeometry(.6,.08,8,24),new THREE.MeshBasicMaterial({color:0xffffff}));r.rotation.x=Math.PI/2;r.position.set(0,.1,3);S.add(r);
+  for(let i=0;i<40;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.5,12,8),new THREE.MeshBasicMaterial({color:i%3?0xe03030:0x3070e0}));m.scale.y=.4;m.position.set(0,.3,-40);S.add(m);N.push({m,t:2+i*.62,s:0})}
+  onTap=()=>{const t=performance.now()/1000-st;let b=null,bd=.22;N.forEach(n=>{if(!n.s&&Math.abs(n.t-t)<bd){bd=Math.abs(n.t-t);b=n}});if(b){b.s=1;b.m.visible=false}};
+  upd=()=>{const t=performance.now()/1000-st;N.forEach(n=>{n.m.position.z=3-(n.t-t)*sp;if(!n.s&&t-n.t>.22){n.s=2;n.m.visible=false;miss++;$('txt').textContent='ミス '+miss}});
+   if(!fin&&t>N[39].t+1){fin=1;onTap=null;miss===20?sc('ミス '+miss+'\n\nクリア成功！\n\n太鼓の余韻を背に、駅へ向かう。',[['帰る',()=>train('n')]],{retry:taiko}):die(miss+'ミス。\n\n'+Y+'俺のこと煽ってるん？」',true)}}});
+ sc('ミス 0',[],{retry:taiko})}
+function send(){world(0x151a2a,[8,40],[0,1.5,4],[0,1.3,-6],()=>{stn();const i=ppl('伊丹',0,-1,{c:0x8a909c,s:1.2});upd=t=>{i.rotation.y=Math.sin(t)*.1}});
+ sc('改札を出ると、伊丹が待っていた。\n\nユナイテッドザクザクを、そっと差し出す。',[['渡す',()=>{boxItem(0,1.1,-1.6);sc(Y+'……ありがとう」\n\n伊丹は、笑っていた。\n\n――CLEAR\n\nユナイテッドザクザクのおつかい、完了。',[['最初から',s0]])}]],{retry:send})}
+s0();
+</script></body></html>
